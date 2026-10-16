@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    "react",
+    "typescript"
+  ],
+  "rules": {
+    "react/rules-of-hooks": "error"
+  },
+  "ignorePatterns": [
+    "dist/**"
+  ]
+}
