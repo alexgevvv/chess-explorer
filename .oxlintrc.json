@@ -1,12 +1,22 @@
 {
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": [
     "react",
-    "typescript"
+    "typescript",
+    "oxc"
   ],
   "rules": {
-    "react/rules-of-hooks": "error"
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ]
   },
   "ignorePatterns": [
+    "public/engine/**",
+    "backup-v*/**",
     "dist/**"
   ]
 }

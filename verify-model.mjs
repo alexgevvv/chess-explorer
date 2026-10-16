@@ -1,49 +1,36 @@
-import assert from 'node:assert/strict'
-import { createGame, getStatus, isOwnPiece, makeMove, needsPromotion, resetGame } from './src/board.ts'
-
-const game = createGame()
-const start = game.fen()
-assert.equal(isOwnPiece(game, 'e2'), true)
-assert.equal(isOwnPiece(game, 'e7'), false)
-assert.equal(makeMove(game, 'e2', 'e5'), false)
-assert.equal(makeMove(game, 'e7', 'e5'), false)
-assert.equal(game.fen(), start)
-assert.equal(makeMove(game, 'e2', 'e4'), true)
-assert.equal(game.history().length, 1)
-assert.equal(getStatus(game), 'Black to move')
-resetGame(game)
-assert.equal(game.fen(), start)
-assert.equal(game.history().length, 0)
-
-function playMoves(chess, moves) {
-  for (const [from, to] of moves) assert.equal(makeMove(chess, from, to), true)
-}
-playMoves(game, [['e2','e4'], ['e7','e5'], ['g1','f3'], ['b8','c6'], ['f1','c4'], ['g8','f6'], ['e1','g1']])
-assert.equal(game.get('g1').type, 'k')
-assert.equal(game.get('f1').type, 'r')
-
-const ep = createGame()
-playMoves(ep, [['e2','e4'], ['a7','a6'], ['e4','e5'], ['d7','d5'], ['e5','d6']])
-assert.equal(ep.get('d5'), undefined)
-assert.equal(ep.get('d6').color, 'w')
-
-for (const piece of ['q', 'r', 'b', 'n']) {
-  const promoted = createGame('8/P6k/8/8/8/8/8/7K w - - 0 34')
-  assert.equal(needsPromotion(promoted, 'a7', 'a8'), true)
-  const before = promoted.fen()
-  assert.equal(makeMove(promoted, 'a7', 'a8'), false)
-  assert.equal(promoted.fen(), before)
-  assert.equal(makeMove(promoted, 'a7', 'a8', piece), true)
-  assert.equal(promoted.get('a8').type, piece)
-}
-const mate = createGame()
-playMoves(mate, [['f2','f3'], ['e7','e5'], ['g2','g4'], ['d8','h4']])
-assert.equal(getStatus(mate), 'Checkmate: Black wins')
-
-const repeated = createGame()
-playMoves(repeated, [
-  ['g1','f3'], ['g8','f6'], ['f3','g1'], ['f6','g8'],
-  ['g1','f3'], ['g8','f6'], ['f3','g1'], ['f6','g8'],
-])
-assert.equal(getStatus(repeated), 'Draw: threefold repetition')
-console.log('PASS: legal moves, invalid moves, turn, reset, castling, en passant, four promotion choices, checkmate and repetition.')
+import assert from 'node:assert/strict';
+import { addMove, createTree, gameAt, importPgn, makeMain, moveLabel } from './src/board.ts';
+let t = addMove(createTree(), 'e4');
+const e4 = t.current;
+t = addMove(t, 'e5');
+const e5 = t.current;
+t = addMove({ ...t, current: e4 }, 'c5');
+const c5 = t.current;
+assert.deepEqual(t.nodes[e4].children, [e5, c5]);
+assert.equal(t.nodes[e5].san, 'e5');
+assert.equal(gameAt(t).get('c5').type, 'p');
+assert.equal(gameAt({ ...t, current: e5 }).get('e5').type, 'p');
+const total = Object.keys(t.nodes).length;
+assert.equal(Object.keys(addMove({ ...t, current: e4 }, 'c5').nodes).length, total);
+t = makeMain(t);
+assert.deepEqual(t.nodes[e4].children, [c5, e5]);
+assert.equal(moveLabel(t, c5), '1... c5');
+assert.throws(() => addMove(createTree(), { from: 'e2', to: 'e5' }));
+let repeated = createTree();
+for (const san of ['Nf3','Nf6','Ng1','Ng8','Nf3','Nf6','Ng1','Ng8']) repeated = addMove(repeated, san);
+assert.ok(gameAt(repeated).isThreefoldRepetition());
+const loaded = importPgn('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6');
+assert.equal(loaded.current, 'root');
+assert.equal(Object.keys(loaded.nodes).length, 7);
+const promoted = addMove(createTree('8/P6k/8/8/8/8/8/7K w - - 0 34'), { from: 'a7', to: 'a8', promotion: 'n' });
+assert.equal(gameAt(promoted).get('a8').type, 'n');
+assert.equal(moveLabel(promoted, promoted.current), '34. a8=N');
+let castle = createTree();
+for (const san of ['e4','e5','Nf3','Nc6','Bc4','Nf6','O-O']) castle = addMove(castle, san);
+assert.equal(gameAt(castle).get('g1').type, 'k');
+assert.equal(gameAt(castle).get('f1').type, 'r');
+let ep = createTree();
+for (const san of ['e4','a6','e5','d5','exd6']) ep = addMove(ep, san);
+assert.equal(gameAt(ep).get('d5'), undefined);
+assert.equal(gameAt(ep).get('d6').type, 'p');
+console.log('PASS: branching, navigation, deduplication, main line, numbering, illegal moves, repetition, PGN, underpromotion, castling, en passant.');

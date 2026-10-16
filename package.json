@@ -1,29 +1,36 @@
 {
-  "name": "chess-explorer-minimal",
+  "name": "chess-explorer",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview",
     "lint": "oxlint",
-    "test": "node verify-model.mjs"
+    "preview": "vite preview",
+    "predev": "node prepare-engine.mjs",
+    "prebuild": "node prepare-engine.mjs",
+    "test": "node verify-model.mjs && node verify-data.mjs && node verify-worker.mjs",
+    "test:browser": "node verify-browser.mjs && node verify-full-browser.mjs && node verify-resilience.mjs"
   },
   "dependencies": {
-    "chess.js": "1.4.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-chessboard": "5.12.1"
+    "chess.js": "^1.4.0",
+    "dexie": "^4.4.6",
+    "lucide-react": "^1.57.0",
+    "react": "^19.2.8",
+    "react-chessboard": "^5.12.1",
+    "react-dom": "^19.2.8",
+    "stockfish": "19.0.1"
   },
   "devDependencies": {
-    "@types/node": "24.13.3",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.7",
-    "@vitejs/plugin-react": "6.1.1",
-    "oxlint": "1.81.0",
-    "typescript": "6.0.2",
-    "vite": "8.3.4"
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
   },
   "engines": {
     "node": ">=24"
